@@ -2,7 +2,11 @@ import metadataJson from "./quickSketchFullMetadata.json";
 import { ImageSet, Metadata } from "./types";
 
 const metadata: Metadata = metadataJson as any;
-export const getFilteredMetadata = (requireCategory: string, requireTag: string, imageCount?: number): Metadata => {
+export const getFilteredMetadata = (
+    requireCategory: string,
+    requireTag: string,
+    imageCount?: number
+): Metadata => {
     if (!requireCategory && !requireTag) return metadata;
     const filteredSets: ImageSet[] = metadata.imageSets.filter(set => {
         if (!Object.keys(set.tags).includes(requireCategory)) return false;
@@ -27,10 +31,10 @@ export const getFilteredMetadata = (requireCategory: string, requireTag: string,
         folders,
         imageCount: filteredSets.reduce((acc, cur) => acc + cur.imageCount, 0),
         imageSets: filteredSets.map(imageSet => {
-            if(!imageCount) return imageSet;
+            if (!imageCount) return imageSet;
             return {
                 ...imageSet,
-                images: imageSet.images?.slice(0, imageCount) || []
+                images: imageSet.images?.slice(0, imageCount) || [],
             };
         }),
         setCount: filteredSets.length,

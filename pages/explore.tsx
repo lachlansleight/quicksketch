@@ -7,8 +7,8 @@ import { Metadata } from "lib/types";
 import ImageSetTile from "components/ImageSetTile";
 import ExploreTagList from "components/ExploreTagList";
 import Pagination from "components/Pagination";
-import { getMetadata } from "./api/generateMetadata";
 import { getFilteredMetadata } from "lib/cachedMetadata";
+import { getMetadata } from "./api/generateMetadata";
 
 const Explore = ({
     metadata,
@@ -18,6 +18,7 @@ const Explore = ({
     hasFilter: boolean;
 }): JSX.Element => {
     const [page, setPage] = useState(0);
+    const imagesPerPage = 24;
 
     return (
         <Layout>
@@ -51,14 +52,16 @@ const Explore = ({
                     <h2 className="text-4xl">Tags</h2>
                     <ExploreTagList tags={metadata.tagCounts} />
                     <div className="grid grid-cols-6 text-xs gap-2">
-                        {metadata.imageSets.slice(page * 102, (page + 1) * 102).map(set => (
-                            <ImageSetTile key={set.id} imageSet={set} />
-                        ))}
+                        {metadata.imageSets
+                            .slice(page * imagesPerPage, (page + 1) * imagesPerPage)
+                            .map(set => (
+                                <ImageSetTile key={set.id} imageSet={set} />
+                            ))}
                     </div>
                     <Pagination
                         value={page + 1}
                         onChange={v => setPage(v - 1)}
-                        totalPages={Math.ceil(metadata.setCount / 102)}
+                        totalPages={Math.ceil(metadata.setCount / imagesPerPage)}
                         maxPages={7}
                     />
                 </div>
@@ -76,9 +79,12 @@ export async function getServerSideProps(
     const requireTag = (ctx.query.tag as string) || "";
     const hasFilter = !!requireCategory && !!requireTag;
     //const metadata = hasFilter ? getMetadata(requireCategory, requireTag) : getMetadata();
-    const filteredMetadata = process.env.NEXT_PUBLIC_NO_CACHE 
-        ? hasFilter ? getMetadata(requireCategory, requireTag) : getMetadata(undefined, undefined, 1)
-        : getFilteredMetadata(requireCategory, requireTag, 1);
+    const filteredMetadata =
+        process.env.NEXT_PUBLIC_NO_CACHE === "true"
+            ? hasFilter
+                ? await getMetadata(requireCategory, requireTag)
+                : await getMetadata(undefined, undefined, 1)
+            : getFilteredMetadata(requireCategory, requireTag, 1);
     //const filteredMetadata = getFilteredMetadata(requireCategory, requireTag);
     return {
         props: { metadata: filteredMetadata, hasFilter },

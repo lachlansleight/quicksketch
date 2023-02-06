@@ -6,7 +6,7 @@ import QuickdrawImage from "./QuickdrawImage";
 const QuickdrawGallery = ({
     images,
     index,
-    padding = 21,
+    padding = 14,
 }: {
     images: SetImage[];
     index: number;

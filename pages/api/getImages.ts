@@ -42,7 +42,8 @@ export default async (req: NextApiRequest, res: NextApiResponse): Promise<void> 
             const includeFilterKeys = !include ? [] : Object.keys(include);
             const excludeFilterKeys = !exclude ? [] : Object.keys(exclude);
 
-            const metadata = process.env.NEXT_PUBLIC_NO_CACHE ? cachedMetadata : getMetadata();
+            const metadata =
+                process.env.NEXT_PUBLIC_NO_CACHE === "true" ? await getMetadata() : cachedMetadata;
             console.log("Filtering " + metadata.imageSets.length + " sets...");
             const imageSets: ImageSet[] = metadata.imageSets.filter(set => {
                 return filterImageSet(

@@ -1,26 +1,25 @@
 import path from "path";
-import fs from "fs";
+import fs from "fs/promises";
 import { NextApiRequest, NextApiResponse } from "next";
 import { transformTagArray } from "lib/tagMapping";
 import { ImageSet, Metadata } from "lib/types";
 import { getSetImages } from "./imageSet/[setFolder]/[setId]";
 
-const getMetadataFromFolder = (
+const getMetadataFromFolder = async (
     folder: string,
     requireCategory?: string,
     requireTag?: string
-): Metadata => {
+): Promise<Metadata> => {
     const localPath = path.join(path.resolve(process.env.FILE_PATH as string), folder);
-    const ids = fs
-        .readdirSync(localPath)
-        .map(s => Number(s))
-        .filter(n => !isNaN(n));
+    const folderNames = await fs.readdir(localPath);
+    process.stdout.write("Getting metadata from " + folder + " - Getting tags");
+    const ids = folderNames.map(s => Number(s)).filter(n => !isNaN(n));
     const folders = ids.map(f => path.join(localPath, f.toString()));
-    const tags = folders.map(f => {
+    const folderFiles = await Promise.all(folders.map(f => fs.readdir(f)));
+    const tags = folderFiles.map(f => {
         try {
-            const files = fs.readdirSync(f);
-            let tagFile = files.find(fn => fn.substring(0, 4) === "TAGS");
-            if(!tagFile) tagFile = files[0];
+            let tagFile = f.find(fn => fn.substring(0, 4) === "TAGS");
+            if (!tagFile) tagFile = f[0];
             else tagFile = tagFile.split(".")[0];
             return tagFile.split("_")[1].split("-");
         } catch (e: any) {
@@ -38,12 +37,24 @@ const getMetadataFromFolder = (
     const tagCounts: { [tag: string]: number } = {};
 
     for (let i = 0; i < ids.length; i++) {
+        process.stdout.write(
+            "\r                                                                               \r"
+        );
+        process.stdout.write(
+            "Getting metadata from " +
+                folder +
+                " - Getting images " +
+                (i + 1) +
+                "/" +
+                ids.length +
+                ""
+        );
         const id = Number(ids[i]);
         const tags = finalTags[id];
         if (requireCategory && requireTag) {
             if (!tags[requireCategory]?.includes(requireTag)) continue;
         }
-        const imageCount = fs.readdirSync(path.join(localPath, id.toString())).length;
+        const imageCount = folderFiles.length;
         imageSets.push({
             id,
             imageCount,
@@ -59,6 +70,7 @@ const getMetadataFromFolder = (
             });
         });
     }
+    process.stdout.write("\n");
 
     return {
         folders: [folder],
@@ -70,12 +82,19 @@ const getMetadataFromFolder = (
     };
 };
 
-export const getMetadata = (requireCategory?: string, requireTag?: string, imageCount?: number): Metadata => {
-
-    const folders = fs.readdirSync(process.env.FILE_PATH as string).filter(f => !f.includes("."));
-    const subMetadatas = folders.map(f => {
-        return getMetadataFromFolder(f, requireCategory, requireTag);
-    });
+export const getMetadata = async (
+    requireCategory?: string,
+    requireTag?: string,
+    imageCount?: number
+): Promise<Metadata> => {
+    const folders = (await fs.readdir(process.env.FILE_PATH as string)).filter(
+        f => !f.includes(".")
+    );
+    const subMetadatas: Metadata[] = [];
+    for (let i = 0; i < folders.length; i++) {
+        const newMetadata = await getMetadataFromFolder(folders[i], requireCategory, requireTag);
+        subMetadatas.push(newMetadata);
+    }
 
     //combine tags of all three folders
     let combinedTags: Record<string, number> = {};
@@ -96,18 +115,23 @@ export const getMetadata = (requireCategory?: string, requireTag?: string, image
     });
 
     const combinedMetadata: Metadata = {
-        folders: subMetadatas.reduce((acc, subMetadata) => acc.concat(subMetadata.folders), [] as string[]),
+        folders: subMetadatas.reduce(
+            (acc, subMetadata) => acc.concat(subMetadata.folders),
+            [] as string[]
+        ),
         setCount: subMetadatas.reduce((acc, subMetadata) => acc + subMetadata.setCount, 0),
         tagCount: Object.keys(combinedTags).length,
         imageCount: subMetadatas.reduce((acc, subMetadata) => acc + subMetadata.imageCount, 0),
         tagCounts: combinedTags,
-        imageSets: subMetadatas.reduce((acc, subMetadata) => acc.concat(subMetadata.imageSets), [] as ImageSet[]).map(imageSet => {
-            if(!imageCount) return imageSet;
-            return {
-                ...imageSet,
-                images: imageSet.images?.slice(0, imageCount) || []
-            }
-        }),
+        imageSets: subMetadatas
+            .reduce((acc, subMetadata) => acc.concat(subMetadata.imageSets), [] as ImageSet[])
+            .map(imageSet => {
+                if (!imageCount) return imageSet;
+                return {
+                    ...imageSet,
+                    images: imageSet.images?.slice(0, imageCount) || [],
+                };
+            }),
     };
     return combinedMetadata;
 };
@@ -117,9 +141,18 @@ export default async (req: NextApiRequest, res: NextApiResponse): Promise<void> 
 
     try {
         if (req.method === "GET") {
-            const metadata = getMetadata();
-            fs.writeFileSync(path.join((process.env.FILE_PATH as string).replace("public/", "lib/"), "quickSketchFullMetadata.json"), JSON.stringify(metadata));
-            res.status(200).json(metadata);
+            const metadata = await getMetadata();
+            console.log("Writing metadata.json");
+            await fs.writeFile(
+                path.join(
+                    (process.env.FILE_PATH as string).replace("public/", "lib/"),
+                    "quickSketchFullMetadata.json"
+                ),
+                JSON.stringify(metadata)
+            );
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { imageSets, ...restMetadata } = metadata;
+            res.status(200).json(restMetadata);
         } else {
             statusCode = 405;
             throw new Error(`${req.method} not supported for /generateMetadata`);

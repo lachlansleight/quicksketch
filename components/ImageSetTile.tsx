@@ -14,7 +14,9 @@ const ImageSetTile = ({ imageSet }: { imageSet: ImageSet }): JSX.Element => {
             >
                 <div className="flex flex-col">
                     <h2 className="text-lg h-5 relative -top-2">Set {imageSet.id}</h2>
-                    <p className="text-[1rem] h-3 italic text-white text-opacity-60 relative -top-2">{imageSet.imageCount} images</p>
+                    <p className="text-[1rem] h-3 italic text-white text-opacity-60 relative -top-2">
+                        {imageSet.imageCount} images
+                    </p>
                 </div>
                 <div className="h-36">
                     {hovering ? (
@@ -32,8 +34,11 @@ const ImageSetTile = ({ imageSet }: { imageSet: ImageSet }): JSX.Element => {
                         </div>
                     ) : (
                         <div className="h-full w-full grid place-items-center">
-                            {imageSet.images && (
+                            {imageSet.images &&
+                            !(imageSet.tags["photo-technology"]?.includes("high-res") || false) ? (
                                 <img className="object-contain h-36" src={imageSet.images[0]} />
+                            ) : (
+                                <div className="object-contain h-36" />
                             )}
                         </div>
                     )}

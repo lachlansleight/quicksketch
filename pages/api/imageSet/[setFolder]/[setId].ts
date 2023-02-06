@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { NextApiRequest, NextApiResponse } from "next";
+import cachedMetadata from "lib/cachedMetadata";
 import { getMetadata } from "../../generateMetadata";
 
 export const getSetImages = (id: number, folder: string) => {
@@ -9,8 +10,9 @@ export const getSetImages = (id: number, folder: string) => {
     return files.map(f => `${process.env.NEXT_PUBLIC_LOCAL_PATH}${folder}/${id.toString()}/${f}`);
 };
 
-export const getImageSet = (id: number, folder: string) => {
-    const metadata = getMetadata();
+export const getImageSet = async (id: number, folder: string) => {
+    const metadata =
+        process.env.NEXT_PUBLIC_NO_CACHE === "true" ? await getMetadata() : cachedMetadata;
     const imageSet = metadata.imageSets.find(set => set.id === id && set.folder === folder);
     if (!imageSet) return undefined;
     imageSet.images = getSetImages(id, folder);
@@ -24,7 +26,7 @@ export default async (req: NextApiRequest, res: NextApiResponse): Promise<void> 
         if (req.method === "GET") {
             const setId = Number(req.query.setId as string);
             const setFolder = String(req.query.setFolder);
-            const set = getImageSet(setId, setFolder);
+            const set = await getImageSet(setId, setFolder);
             if (!set) {
                 statusCode = 404;
                 throw new Error("Image set " + setId + " not found");

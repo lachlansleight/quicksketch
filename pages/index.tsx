@@ -242,7 +242,7 @@ const HomePage = (): JSX.Element => {
                 )}
                 {showingHelp && (
                     <div
-                        className="fixed top-36 border rounded px-8 py-4 flex flex-col gap-4"
+                        className="fixed top-36 border rounded px-8 py-4 flex flex-col gap-4 bg-neutral-900"
                         style={{
                             width: "calc(100vw - 8rem)",
                             margin: "0 auto",
@@ -256,10 +256,8 @@ const HomePage = (): JSX.Element => {
                         </div>
                         <p>
                             This is a little app I wrote to make it easy to setup varied quicksketch
-                            drawing sessions. I scraped over half a million images from several
-                            drawing reference sites that offered free thumbnail gallery previews, so
-                            there is a massive variety of poses, subjects, etc. The drawback is that
-                            the image quality is terrible, but hey it is what it is.
+                            drawing sessions. If you&apos;re reading this, then you must have
+                            already completed the setup steps in README.md.
                         </p>
                         <p>
                             Use the two dropdowns above to select how many images you&apos;d like in

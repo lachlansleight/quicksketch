@@ -100,7 +100,7 @@ export default SetPage;
 export async function getServerSideProps(
     ctx: GetServerSidePropsContext
 ): Promise<GetServerSidePropsResult<{ imageSet: ImageSet }>> {
-    const imageSet = getImageSet(Number(ctx.query.setId as string), String(ctx.query.setFolder));
+    const imageSet = await getImageSet(Number(ctx.query.setId as string), String(ctx.query.setFolder));
     if (!imageSet) return { notFound: true };
     return {
         props: { imageSet },
