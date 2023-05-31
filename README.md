@@ -27,12 +27,13 @@ Happy sketching!
 ### Running
 
 1. Extract the main application archive to a useful folder
-2. Put your image folders into the `/public/` directory within the main folder. These are all required, I just split them up to make them easier to download! (So, a full path should look something like `/public/images/40/file-name-here.jpg`). You can get away with only using one, but you'll need to regenerate the metadata json - see the section below.
+2. Put your image folders into the `/public/` directory within the main folder. Make sure that the path to any given image matches the pattern `/public/[set-id]/[image-filename.jpg]`, where set-id is an integer. See the section below for more information on adding image sets.
 3. Create a file called `.env` and put the contents of `example-env.env` into it. Change the `FILE_PATH` value to match the public folder from above. Note the forward slashes!
 4. In a terminal, navigate to the root directory (the directory containing package.json) and run `npm install` (this will take a while)
 5. To run the app (in the same root directory) run `npm run dev`
 6. You should now be able to access the app in your web browser at [http://localhost:3055](http://localhost:3055)
-7. Verify that the image database is correctly setup by clicking on the 'Explore Image Sets & Tags' button in the top-left. There should be some 650k images.
+7. Regenerate metadata by following the instructions in the next section.
+8. Verify that the image database is correctly setup by clicking on the 'Explore Image Sets & Tags' button in the top-left.
 
 ### Regenerating metadata
 
@@ -46,4 +47,4 @@ QuickSketch manages the image folder assuming everything will adhere to the foll
 
 To add tags to your image sets, the easiest option is to include a tags file within an image set folder the following name format: `TAGS_[your-tags-here].json`, the tags this file has will be applied to all images in the set. Note that tags are applied to an entire set, if you want to have separate tags for images within a set, split them into multiple sets.
 
-The tag categories are hard-coded by me, so any tags you include that aren't known tags (i.e. tags that appear in the explore page) will be grouped in the 'other' category (e.g. other/yourtag). **Multi-word custom tags aren't supported**, so if you try to add `my-custom-tag`, your set will instead have `other/my`, `other/custom` and `other/tag` added to it.
+The tag categories are hard-coded by me, so any tags you include that aren't known tags (i.e. tags that appear in the explore page) will be grouped in the 'other' category (e.g. other/yourtag). **Multi-word custom tags aren't supported**, so if you try to add `my-custom-tag`, your set will instead have `other/my`, `other/custom` and `other/tag` added to it. For a list of hardcoded tags, see the file [enums.ts](https://github.com/lachlansleight/quicksketch/blob/main/lib/enums.ts) - note that the tags are the enum values, the enum names are inferred from the tag name.
